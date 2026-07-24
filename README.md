@@ -48,7 +48,7 @@ every step**.
 | 2 | **Room list management + floor-map pin placement** | ✅ Done |
 | 3 | **Guided per-room baseline recording + playback** | ✅ Done |
 | 4 | **Keyframe extraction pipeline** | ✅ Done |
-| 5 | Inspection recording flow | ⏳ Planned |
+| 5 | **Inspection recording flow** | ✅ Done |
 | 6 | Anthropic API paired-frame analysis (+ mock mode) | ⏳ Planned |
 | 7 | Results map + side-by-side comparison view | ⏳ Planned |
 | 8 | Polish (permissions, low-storage, empty states, one-handed UX) | ⏳ Planned |
@@ -97,6 +97,19 @@ every step**.
 > device via Expo Go (it can't run in a simulator without a camera). The rest of
 > the app — properties, rooms, floor map, playback of existing clips — works
 > everywhere.
+
+### What works right now (steps 4–5)
+
+- **Keyframe extraction**: after each room is recorded, ~1 frame every 1.5s
+  (capped at 16) is extracted and stored (`expo-video-thumbnails`); the record
+  screen shows the frame count per room.
+- **Inspection walkthrough**: once the baseline is complete, *Start inspection*
+  runs the **same guided per-room flow** (reusing the record component) for the
+  move-out pass. Each inspection room's frames are extracted and a paired
+  baseline-vs-inspection **comparison is queued** per room.
+- **Non-blocking by design**: comparisons are enqueued into an `analysis_jobs`
+  table and executed later (step 6), so a slow/offline AI call never blocks the
+  walkthrough. The property screen shows how many rooms are queued.
 
 Everything is stored locally on the device — there is **no backend server**.
 
@@ -157,6 +170,7 @@ src/
     sessions.ts          Walkthrough sessions (baseline/inspection)
     clips.ts             Per-room video clip rows
     keyframes.ts         Extracted keyframe rows
+    analysisJobs.ts      Queued per-room AI comparison jobs
   navigation/
     RootNavigator.tsx    Native stack
     types.ts             Route param types

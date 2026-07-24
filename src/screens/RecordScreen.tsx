@@ -23,6 +23,7 @@ import {
 } from '../db/sessions';
 import { getClipsByRoom, upsertClip } from '../db/clips';
 import { countKeyframesForClip } from '../db/keyframes';
+import { enqueueJob } from '../db/analysisJobs';
 import { extractKeyframesForClip } from '../media/keyframes';
 import {
   availableDiskSpace,
@@ -150,12 +151,23 @@ export function RecordScreen({ route, navigation }: RootStackScreenProps<'Record
         console.warn('Keyframe extraction failed', err);
         setFrameCounts((prev) => ({ ...prev, [room.id]: 0 }));
       }
+
+      // For inspection clips, queue the paired-frame AI comparison for this
+      // room. The comparison runs later (step 6) so a slow/offline AI call
+      // never blocks the walkthrough.
+      if (sessionType === 'inspection') {
+        try {
+          await enqueueJob(session.id, room.id);
+        } catch (err) {
+          console.warn('Failed to queue analysis job', err);
+        }
+      }
       setPhase('idle');
     } catch (err) {
       setPhase('idle');
       Alert.alert('Recording failed', err instanceof Error ? err.message : String(err));
     }
-  }, [room, session]);
+  }, [room, session, sessionType]);
 
   const startRecording = useCallback(async () => {
     if (!cameraRef.current || !room || !session) return;

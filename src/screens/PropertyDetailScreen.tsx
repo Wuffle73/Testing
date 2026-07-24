@@ -15,6 +15,7 @@ import { deleteProperty, getProperty } from '../db/properties';
 import { listRooms } from '../db/rooms';
 import { getCurrentSession, reopenSession } from '../db/sessions';
 import { getClipsByRoom } from '../db/clips';
+import { listJobsForSession } from '../db/analysisJobs';
 import type { Clip, Property, Room, Session } from '../types/models';
 import { colors, spacing, radius, fontSize, shadow, TOUCH_TARGET } from '../theme/theme';
 import { Button } from '../components/Button';
@@ -25,18 +26,30 @@ export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps
   const [rooms, setRooms] = useState<Room[]>([]);
   const [baseline, setBaseline] = useState<Session | null>(null);
   const [baselineClips, setBaselineClips] = useState<Record<string, Clip>>({});
+  const [inspection, setInspection] = useState<Session | null>(null);
+  const [inspectionClips, setInspectionClips] = useState<Record<string, Clip>>({});
+  const [queuedJobs, setQueuedJobs] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const [p, r, session] = await Promise.all([
+    const [p, r, baseSession, inspSession] = await Promise.all([
       getProperty(propertyId),
       listRooms(propertyId),
       getCurrentSession(propertyId, 'baseline'),
+      getCurrentSession(propertyId, 'inspection'),
     ]);
     setProperty(p);
     setRooms(r);
-    setBaseline(session);
-    setBaselineClips(session ? await getClipsByRoom(session.id) : {});
+    setBaseline(baseSession);
+    setBaselineClips(baseSession ? await getClipsByRoom(baseSession.id) : {});
+    setInspection(inspSession);
+    setInspectionClips(inspSession ? await getClipsByRoom(inspSession.id) : {});
+    if (inspSession) {
+      const jobs = await listJobsForSession(inspSession.id);
+      setQueuedJobs(jobs.filter((j) => j.status === 'queued' || j.status === 'error').length);
+    } else {
+      setQueuedJobs(0);
+    }
     setLoading(false);
   }, [propertyId]);
 
@@ -89,6 +102,13 @@ export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps
     startBaseline();
   };
 
+  const startInspection = () => navigation.navigate('Record', { propertyId, sessionType: 'inspection' });
+
+  const reRecordInspection = async () => {
+    if (inspection) await reopenSession(inspection.id);
+    startInspection();
+  };
+
   const playClip = (room: Room, clip: Clip) =>
     navigation.navigate('Playback', { uri: clip.videoUri, title: `${room.name} · baseline` });
 
@@ -111,6 +131,8 @@ export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps
   const recordedCount = rooms.filter((r) => baselineClips[r.id]).length;
   const baselineComplete = baseline?.status === 'complete';
   const hasRooms = rooms.length > 0;
+  const inspectionRecordedCount = rooms.filter((r) => inspectionClips[r.id]).length;
+  const inspectionComplete = inspection?.status === 'complete';
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -208,14 +230,46 @@ export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps
         )}
       </View>
 
-      {/* Inspection (move-out) — enabled in build step 5. */}
-      <View style={[styles.card, styles.disabledCard]}>
-        <Text style={styles.roadmapTitle}>🔍 Inspection (move-out)</Text>
-        <Text style={styles.muted}>
-          {baselineComplete
-            ? 'Ready to inspect. The guided inspection flow + AI comparison arrive in steps 5–7.'
-            : 'Complete the baseline first. Inspection records and AI-compares against it (steps 5–7).'}
-        </Text>
+      {/* Inspection (move-out) */}
+      <View style={[styles.card, !baselineComplete && styles.disabledCard]}>
+        <View style={styles.walkHeader}>
+          <Text style={styles.roadmapTitle}>🔍 Inspection (move-out)</Text>
+          {inspectionComplete ? <Text style={styles.completeTag}>Complete ✓</Text> : null}
+        </View>
+        {!baselineComplete ? (
+          <Text style={styles.muted}>
+            Complete the baseline first. The inspection records the same rooms and AI-compares
+            each against its move-in clip.
+          </Text>
+        ) : (
+          <>
+            <Text style={styles.muted}>
+              {inspectionRecordedCount} of {rooms.length} rooms recorded
+              {queuedJobs > 0 ? ` · ${queuedJobs} queued for AI analysis` : ''}.
+            </Text>
+            {queuedJobs > 0 ? (
+              <Text style={styles.note}>
+                Queued comparisons run in the AI analysis step (step 6) — recording never waits on
+                them.
+              </Text>
+            ) : null}
+            {inspectionComplete ? (
+              <Button
+                label="Re-record inspection"
+                variant="secondary"
+                onPress={reRecordInspection}
+                style={styles.walkBtn}
+              />
+            ) : (
+              <Button
+                label={inspection ? 'Continue inspection' : 'Start inspection'}
+                icon="🔍"
+                onPress={startInspection}
+                style={styles.walkBtn}
+              />
+            )}
+          </>
+        )}
       </View>
 
       <View style={styles.actions}>
@@ -279,4 +333,5 @@ const styles = StyleSheet.create({
   actions: { marginTop: spacing.xl },
   headerEdit: { color: colors.primary, fontSize: fontSize.md, fontWeight: '700' },
   muted: { fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 20 },
+  note: { fontSize: fontSize.xs, color: colors.textMuted, lineHeight: 18, fontStyle: 'italic' },
 });
