@@ -10,6 +10,8 @@ import { RoomsScreen } from '../screens/RoomsScreen';
 import { FloorMapScreen } from '../screens/FloorMapScreen';
 import { RecordScreen } from '../screens/RecordScreen';
 import { PlaybackScreen } from '../screens/PlaybackScreen';
+import { AnalysisScreen } from '../screens/AnalysisScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -45,6 +47,12 @@ export function RootNavigator() {
         name="Playback"
         component={PlaybackScreen}
         options={{ presentation: 'modal', title: 'Playback' }}
+      />
+      <Stack.Screen name="Analysis" component={AnalysisScreen} options={{ title: 'AI analysis' }} />
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ presentation: 'modal', title: 'AI settings' }}
       />
     </Stack.Navigator>
   );

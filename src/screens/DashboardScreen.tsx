@@ -39,15 +39,26 @@ export function DashboardScreen({ navigation }: RootStackScreenProps<'Dashboard'
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Add property"
-          hitSlop={12}
-          onPress={() => navigation.navigate('PropertyForm')}
-          style={({ pressed }) => [styles.headerAdd, pressed && { opacity: 0.6 }]}
-        >
-          <Text style={styles.headerAddText}>＋ Add</Text>
-        </Pressable>
+        <View style={styles.headerRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="AI settings"
+            hitSlop={12}
+            onPress={() => navigation.navigate('Settings')}
+            style={({ pressed }) => [styles.headerGear, pressed && { opacity: 0.6 }]}
+          >
+            <Text style={styles.headerGearText}>⚙︎</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Add property"
+            hitSlop={12}
+            onPress={() => navigation.navigate('PropertyForm')}
+            style={({ pressed }) => [styles.headerAdd, pressed && { opacity: 0.6 }]}
+          >
+            <Text style={styles.headerAddText}>＋ Add</Text>
+          </Pressable>
+        </View>
       ),
     });
   }, [navigation]);
@@ -153,6 +164,9 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   roomCount: { fontSize: fontSize.xs, color: colors.textMuted, fontWeight: '600' },
+  headerRow: { flexDirection: 'row', alignItems: 'center' },
+  headerGear: { minHeight: TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.sm },
+  headerGearText: { color: colors.primary, fontSize: 20 },
   headerAdd: {
     minHeight: TOUCH_TARGET,
     justifyContent: 'center',

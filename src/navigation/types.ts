@@ -15,6 +15,8 @@ export type RootStackParamList = {
   /** Guided per-room recording flow, reused for baseline and inspection. */
   Record: { propertyId: string; sessionType: SessionType };
   Playback: { uri: string; title: string };
+  Analysis: { propertyId: string };
+  Settings: undefined;
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =

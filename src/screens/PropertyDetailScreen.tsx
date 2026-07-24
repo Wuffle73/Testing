@@ -268,6 +268,15 @@ export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps
                 style={styles.walkBtn}
               />
             )}
+            {inspection ? (
+              <Button
+                label="AI analysis & findings"
+                icon="🤖"
+                variant="secondary"
+                onPress={() => navigation.navigate('Analysis', { propertyId })}
+                style={styles.walkBtn}
+              />
+            ) : null}
           </>
         )}
       </View>

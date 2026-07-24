@@ -49,7 +49,7 @@ every step**.
 | 3 | **Guided per-room baseline recording + playback** | ✅ Done |
 | 4 | **Keyframe extraction pipeline** | ✅ Done |
 | 5 | **Inspection recording flow** | ✅ Done |
-| 6 | Anthropic API paired-frame analysis (+ mock mode) | ⏳ Planned |
+| 6 | **Anthropic API paired-frame analysis (+ mock mode)** | ✅ Done |
 | 7 | Results map + side-by-side comparison view | ⏳ Planned |
 | 8 | Polish (permissions, low-storage, empty states, one-handed UX) | ⏳ Planned |
 
@@ -111,29 +111,50 @@ every step**.
   table and executed later (step 6), so a slow/offline AI call never blocks the
   walkthrough. The property screen shows how many rooms are queued.
 
+### What works right now (step 6)
+
+- **AI paired-frame analysis**: from a property → *AI analysis & findings*, tap
+  *Run analysis* to process each room's queued comparison. Baseline and
+  inspection keyframes for the room are sent to the Anthropic vision model with
+  a structured prompt; it returns JSON findings (description, severity,
+  confidence, and a normalized box).
+- **Mock mode (default)**: returns realistic sample findings with **no key and
+  no spend**, so the whole pipeline is testable offline. Toggle it off in
+  **Settings** and paste a key to go live.
+- **Human-in-the-loop**: every finding shows its confidence and can be
+  **Confirmed** or **Dismissed** — the UI states plainly that findings are
+  suggestions, not verdicts.
+- **Resilient**: each AI call has a **timeout + one retry**; a failed room is
+  marked *Failed* with its error and can be re-run — it never blocks the other
+  rooms. Per-room status (queued / analyzing / done / failed) updates live.
+
 Everything is stored locally on the device — there is **no backend server**.
 
 ---
 
-## Where the Anthropic API key goes (later steps)
+## Where the Anthropic API key goes
 
-AI comparison (step 6) calls the Anthropic vision API **directly from the app**
-with extracted video frames. The key is read from either:
+AI comparison calls the Anthropic vision API **directly from the app** with
+extracted video frames. The key is read from either:
 
-1. the `EXPO_PUBLIC_ANTHROPIC_API_KEY` environment variable (create a `.env`
-   file — it is git-ignored), or
-2. a **Settings screen** where you paste your own key (stored on-device).
+1. the `EXPO_PUBLIC_ANTHROPIC_API_KEY` environment variable (copy `.env.example`
+   to `.env` — it is git-ignored), or
+2. the in-app **Settings screen** (⚙︎ on the dashboard), where you paste your
+   own key — stored securely on-device via `expo-secure-store`.
 
-The key is **never hardcoded**.
+The key is **never hardcoded**. The default model is `claude-opus-5`; Settings
+also lets you pick Sonnet 5 or Haiku 4.5 (cheaper) and toggle mock mode.
 
 > 🔒 **Production warning.** Calling the Anthropic API directly from a mobile
 > client exposes your API key to that device. This is fine for local testing,
 > but a real production app must route this call through a **backend proxy** so
-> the key never ships to the client. This will be called out in the app UI as
-> well.
+> the key never ships to the client. This is called out in the Settings screen
+> too.
 
-Until step 6 lands, AI analysis runs in a **mock/offline mode** that returns
-sample findings, so the whole app is testable without a key or network calls.
+**Mock vs live.** Out of the box the app runs in **mock mode** — AI analysis
+returns realistic sample findings with no key and no network calls, so the whole
+app is testable for free. Turn mock mode off in Settings and add a key to run
+real comparisons.
 
 ---
 
@@ -146,6 +167,7 @@ sample findings, so the whole app is testable without a key or network calls.
 - **expo-video** — playback *(step 3; see note below)*
 - **expo-file-system** — local video/frame storage *(step 3+)*
 - **expo-video-thumbnails** — keyframe extraction *(step 4, live)*
+- **expo-secure-store** — on-device storage of the Anthropic API key *(step 6)*
 - **react-native-svg** — floor-map / pin overlay canvas *(steps 2 & 7)*
 - **expo-image-picker** — optional floor-plan photo for the map *(step 2)*
 
@@ -171,6 +193,14 @@ src/
     clips.ts             Per-room video clip rows
     keyframes.ts         Extracted keyframe rows
     analysisJobs.ts      Queued per-room AI comparison jobs
+    findings.ts          AI findings + confirm/dismiss status
+    appSettings.ts       Key/value app settings (mock mode, model)
+  ai/
+    config.ts            API key (SecureStore/env), mock mode, model
+    anthropic.ts         Direct Messages API call (paired frames → JSON)
+    mock.ts              Offline sample-finding generator
+    analysis.ts          Job runner: pair frames, run, persist findings
+    types.ts             RawFinding / FramePayload types
   navigation/
     RootNavigator.tsx    Native stack
     types.ts             Route param types
@@ -182,6 +212,8 @@ src/
     FloorMapScreen.tsx       Drag room pins on a grid or photo
     RecordScreen.tsx         Guided per-room recording (baseline/inspection)
     PlaybackScreen.tsx       Single-clip player (expo-video)
+    AnalysisScreen.tsx       Run AI analysis; confirm/dismiss findings
+    SettingsScreen.tsx       API key, mock mode, model selection
   media/
     keyframes.ts         Keyframe extraction (~1 frame / 1.5s, capped)
   storage/
