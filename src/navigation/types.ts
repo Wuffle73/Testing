@@ -1,8 +1,9 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { SessionType } from '../types/models';
 
 /**
  * Route + param definitions for the root stack. Later build steps add
- * recording, results and comparison routes here.
+ * results and comparison routes here.
  */
 export type RootStackParamList = {
   Dashboard: undefined;
@@ -11,6 +12,9 @@ export type RootStackParamList = {
   PropertyDetail: { propertyId: string };
   Rooms: { propertyId: string };
   FloorMap: { propertyId: string };
+  /** Guided per-room recording flow, reused for baseline and inspection. */
+  Record: { propertyId: string; sessionType: SessionType };
+  Playback: { uri: string; title: string };
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =

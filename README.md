@@ -46,7 +46,7 @@ every step**.
 |------|---------|--------|
 | 1 | Project scaffold, navigation shell, SQLite schema, **property CRUD** | ✅ Done |
 | 2 | **Room list management + floor-map pin placement** | ✅ Done |
-| 3 | Guided per-room baseline recording + playback | ⏳ Planned |
+| 3 | **Guided per-room baseline recording + playback** | ✅ Done |
 | 4 | Keyframe extraction pipeline | ⏳ Planned |
 | 5 | Inspection recording flow | ⏳ Planned |
 | 6 | Anthropic API paired-frame analysis (+ mock mode) | ⏳ Planned |
@@ -75,6 +75,28 @@ every step**.
   place; tap a placed room to remove its pin. Pin positions are stored as
   normalized coordinates so they survive re-layout and background swaps. The
   map is a visual index into rooms, not an architectural drawing.
+
+### What works right now (step 3)
+
+- **Guided baseline recording**: from a property, tap *Start baseline* to walk
+  through rooms **in order** — the screen shows "Now recording: Kitchen — Room
+  2 of 5", records one **720p** clip per room (`expo-camera`), and lets you
+  re-record or advance. Progress dots show which rooms are done.
+- **Crash-safe & resumable**: one clip per room (not one long video). Videos are
+  copied into persistent local storage (`expo-file-system`) at a deterministic
+  path, and the walkthrough **resumes at the first un-recorded room** if you
+  leave and come back. *Finish* marks the baseline complete.
+- **Playback**: tap ▶ next to any recorded room to play its clip
+  (`expo-video`).
+- **Permission handling**: a clear camera + microphone explainer with an *Allow
+  access* / *Open settings* path — no silent crash on denial.
+- **Storage guard**: free space is checked before each recording; if it's low
+  you're warned before filling the device.
+
+> Recording uses real camera hardware, so it must be exercised on a physical
+> device via Expo Go (it can't run in a simulator without a camera). The rest of
+> the app — properties, rooms, floor map, playback of existing clips — works
+> everywhere.
 
 Everything is stored locally on the device — there is **no backend server**.
 
@@ -132,6 +154,8 @@ src/
     schema.ts            DDL + versioned migration runner (PRAGMA user_version)
     properties.ts        Property CRUD + dashboard status + floor-map image
     rooms.ts             Room CRUD, reorder, and pin persistence
+    sessions.ts          Walkthrough sessions (baseline/inspection)
+    clips.ts             Per-room video clip rows
   navigation/
     RootNavigator.tsx    Native stack
     types.ts             Route param types
@@ -141,6 +165,10 @@ src/
     PropertyDetailScreen.tsx Property overview + delete
     RoomsScreen.tsx          Add / rename / delete / reorder rooms
     FloorMapScreen.tsx       Drag room pins on a grid or photo
+    RecordScreen.tsx         Guided per-room recording (baseline/inspection)
+    PlaybackScreen.tsx       Single-clip player (expo-video)
+  storage/
+    videos.ts            Local clip storage + free-space checks
   components/
     Button.tsx           Thumb-friendly button
     StatusChip.tsx       Lifecycle status pill

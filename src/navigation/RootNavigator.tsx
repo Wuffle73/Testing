@@ -8,6 +8,8 @@ import { PropertyFormScreen } from '../screens/PropertyFormScreen';
 import { PropertyDetailScreen } from '../screens/PropertyDetailScreen';
 import { RoomsScreen } from '../screens/RoomsScreen';
 import { FloorMapScreen } from '../screens/FloorMapScreen';
+import { RecordScreen } from '../screens/RecordScreen';
+import { PlaybackScreen } from '../screens/PlaybackScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -38,6 +40,12 @@ export function RootNavigator() {
       />
       <Stack.Screen name="Rooms" component={RoomsScreen} options={{ title: 'Rooms' }} />
       <Stack.Screen name="FloorMap" component={FloorMapScreen} options={{ title: 'Floor map' }} />
+      <Stack.Screen name="Record" component={RecordScreen} options={{ title: 'Record' }} />
+      <Stack.Screen
+        name="Playback"
+        component={PlaybackScreen}
+        options={{ presentation: 'modal', title: 'Playback' }}
+      />
     </Stack.Navigator>
   );
 }

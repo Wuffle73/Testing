@@ -13,20 +13,30 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { RootStackScreenProps } from '../navigation/types';
 import { deleteProperty, getProperty } from '../db/properties';
 import { listRooms } from '../db/rooms';
-import type { Property, Room } from '../types/models';
-import { colors, spacing, radius, fontSize, shadow } from '../theme/theme';
+import { getCurrentSession, reopenSession } from '../db/sessions';
+import { getClipsByRoom } from '../db/clips';
+import type { Clip, Property, Room, Session } from '../types/models';
+import { colors, spacing, radius, fontSize, shadow, TOUCH_TARGET } from '../theme/theme';
 import { Button } from '../components/Button';
 
 export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps<'PropertyDetail'>) {
   const { propertyId } = route.params;
   const [property, setProperty] = useState<Property | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [baseline, setBaseline] = useState<Session | null>(null);
+  const [baselineClips, setBaselineClips] = useState<Record<string, Clip>>({});
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const [p, r] = await Promise.all([getProperty(propertyId), listRooms(propertyId)]);
+    const [p, r, session] = await Promise.all([
+      getProperty(propertyId),
+      listRooms(propertyId),
+      getCurrentSession(propertyId, 'baseline'),
+    ]);
     setProperty(p);
     setRooms(r);
+    setBaseline(session);
+    setBaselineClips(session ? await getClipsByRoom(session.id) : {});
     setLoading(false);
   }, [propertyId]);
 
@@ -72,6 +82,16 @@ export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps
     );
   };
 
+  const startBaseline = () => navigation.navigate('Record', { propertyId, sessionType: 'baseline' });
+
+  const reRecordBaseline = async () => {
+    if (baseline) await reopenSession(baseline.id);
+    startBaseline();
+  };
+
+  const playClip = (room: Room, clip: Clip) =>
+    navigation.navigate('Playback', { uri: clip.videoUri, title: `${room.name} · baseline` });
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -88,6 +108,10 @@ export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps
     );
   }
 
+  const recordedCount = rooms.filter((r) => baselineClips[r.id]).length;
+  const baselineComplete = baseline?.status === 'complete';
+  const hasRooms = rooms.length > 0;
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
@@ -99,7 +123,7 @@ export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps
       </View>
 
       <Text style={styles.sectionTitle}>Rooms</Text>
-      {rooms.length === 0 ? (
+      {!hasRooms ? (
         <View style={styles.card}>
           <Text style={styles.muted}>
             No rooms yet. Add the rooms or areas you want to walk through — they define the
@@ -108,23 +132,34 @@ export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps
         </View>
       ) : (
         <View style={styles.card}>
-          {rooms.map((room, i) => (
-            <View
-              key={room.id}
-              style={[styles.roomRow, i > 0 && styles.roomRowDivider]}
-            >
-              <Text style={styles.roomIndex}>{i + 1}</Text>
-              <Text style={styles.roomName}>{room.name}</Text>
-              {room.pinX != null && room.pinY != null ? (
-                <Text style={styles.roomPinned}>📍</Text>
-              ) : null}
-            </View>
-          ))}
+          {rooms.map((room, i) => {
+            const clip = baselineClips[room.id];
+            return (
+              <View key={room.id} style={[styles.roomRow, i > 0 && styles.roomRowDivider]}>
+                <Text style={styles.roomIndex}>{i + 1}</Text>
+                <Text style={styles.roomName}>{room.name}</Text>
+                {room.pinX != null && room.pinY != null ? (
+                  <Text style={styles.roomPinned}>📍</Text>
+                ) : null}
+                {clip ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Play baseline clip for ${room.name}`}
+                    onPress={() => playClip(room, clip)}
+                    hitSlop={8}
+                    style={({ pressed }) => [styles.playBtn, pressed && { opacity: 0.6 }]}
+                  >
+                    <Text style={styles.playBtnText}>▶</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            );
+          })}
         </View>
       )}
       <View style={styles.rowButtons}>
         <Button
-          label={rooms.length === 0 ? 'Add rooms' : 'Manage rooms'}
+          label={hasRooms ? 'Manage rooms' : 'Add rooms'}
           icon="🚪"
           variant="secondary"
           onPress={() => navigation.navigate('Rooms', { propertyId })}
@@ -139,15 +174,48 @@ export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps
         />
       </View>
 
-      {/* Roadmap placeholders — these flows are wired up in later build steps. */}
       <Text style={styles.sectionTitle}>Walkthroughs</Text>
-      <View style={[styles.card, styles.disabledCard]}>
-        <Text style={styles.roadmapTitle}>🎥 Baseline (move-in)</Text>
-        <Text style={styles.muted}>Guided per-room recording — coming in step 3.</Text>
+
+      {/* Baseline (move-in) */}
+      <View style={styles.card}>
+        <View style={styles.walkHeader}>
+          <Text style={styles.roadmapTitle}>🎥 Baseline (move-in)</Text>
+          {baselineComplete ? <Text style={styles.completeTag}>Complete ✓</Text> : null}
+        </View>
+        {!hasRooms ? (
+          <Text style={styles.muted}>Add rooms first, then record your move-in walkthrough.</Text>
+        ) : (
+          <>
+            <Text style={styles.muted}>
+              {recordedCount} of {rooms.length} rooms recorded.
+            </Text>
+            {baselineComplete ? (
+              <Button
+                label="Re-record baseline"
+                variant="secondary"
+                onPress={reRecordBaseline}
+                style={styles.walkBtn}
+              />
+            ) : (
+              <Button
+                label={baseline ? 'Continue baseline' : 'Start baseline'}
+                icon="🎥"
+                onPress={startBaseline}
+                style={styles.walkBtn}
+              />
+            )}
+          </>
+        )}
       </View>
+
+      {/* Inspection (move-out) — enabled in build step 5. */}
       <View style={[styles.card, styles.disabledCard]}>
         <Text style={styles.roadmapTitle}>🔍 Inspection (move-out)</Text>
-        <Text style={styles.muted}>Records and AI-compares against the baseline — steps 5–7.</Text>
+        <Text style={styles.muted}>
+          {baselineComplete
+            ? 'Ready to inspect. The guided inspection flow + AI comparison arrive in steps 5–7.'
+            : 'Complete the baseline first. Inspection records and AI-compares against it (steps 5–7).'}
+        </Text>
       </View>
 
       <View style={styles.actions}>
@@ -195,8 +263,18 @@ const styles = StyleSheet.create({
   },
   roomName: { flex: 1, fontSize: fontSize.md, color: colors.text, fontWeight: '600' },
   roomPinned: { fontSize: fontSize.sm },
+  playBtn: {
+    width: TOUCH_TARGET,
+    height: TOUCH_TARGET,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playBtnText: { color: colors.primary, fontSize: fontSize.lg, fontWeight: '800' },
   rowButtons: { flexDirection: 'row', gap: spacing.md },
   rowButton: { flex: 1 },
+  walkHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  completeTag: { color: colors.success, fontWeight: '800', fontSize: fontSize.xs },
+  walkBtn: { marginTop: spacing.sm },
   roadmapTitle: { fontSize: fontSize.md, fontWeight: '700', color: colors.text },
   actions: { marginTop: spacing.xl },
   headerEdit: { color: colors.primary, fontSize: fontSize.md, fontWeight: '700' },
