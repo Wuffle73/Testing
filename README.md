@@ -50,7 +50,7 @@ every step**.
 | 4 | **Keyframe extraction pipeline** | ✅ Done |
 | 5 | **Inspection recording flow** | ✅ Done |
 | 6 | **Anthropic API paired-frame analysis (+ mock mode)** | ✅ Done |
-| 7 | Results map + side-by-side comparison view | ⏳ Planned |
+| 7 | **Results map + side-by-side comparison view** | ✅ Done |
 | 8 | Polish (permissions, low-storage, empty states, one-handed UX) | ⏳ Planned |
 
 ### What works right now (step 1)
@@ -128,6 +128,22 @@ every step**.
   marked *Failed* with its error and can be re-run — it never blocks the other
   rooms. Per-room status (queued / analyzing / done / failed) updates live.
 
+### What works right now (step 7)
+
+- **Results map**: the floor map shows a **colored pin per room** based on its
+  worst finding severity — grey = clean, yellow = minor, orange = moderate, red
+  = needs review.
+- **Tap a pin → side-by-side comparison**: baseline (move-in) and inspection
+  (move-out) clips, both **seekable** (`expo-video`), each auto-jumped to the
+  timestamp nearest the flagged frame, with an **SVG highlight box**
+  (`react-native-svg`) drawn on the inspection video at the AI's flagged
+  location. The finding's description + confidence sit below with
+  **Confirm / Dismiss**, and a pager steps through multiple findings in a room.
+- **Findings summary** sorted by severity, each row tappable straight to its
+  comparison, with dismissed findings struck through.
+- **Export** the per-property findings as **plain text or JSON** via the native
+  share sheet (`expo-sharing`). (A polished PDF report is a later phase.)
+
 Everything is stored locally on the device — there is **no backend server**.
 
 ---
@@ -168,6 +184,7 @@ real comparisons.
 - **expo-file-system** — local video/frame storage *(step 3+)*
 - **expo-video-thumbnails** — keyframe extraction *(step 4, live)*
 - **expo-secure-store** — on-device storage of the Anthropic API key *(step 6)*
+- **expo-sharing** — export findings as text/JSON via the share sheet *(step 7)*
 - **react-native-svg** — floor-map / pin overlay canvas *(steps 2 & 7)*
 - **expo-image-picker** — optional floor-plan photo for the map *(step 2)*
 
@@ -214,6 +231,8 @@ src/
     PlaybackScreen.tsx       Single-clip player (expo-video)
     AnalysisScreen.tsx       Run AI analysis; confirm/dismiss findings
     SettingsScreen.tsx       API key, mock mode, model selection
+    ResultsScreen.tsx        Severity map pins + findings summary + export
+    ComparisonScreen.tsx     Side-by-side seekable video + SVG overlay
   media/
     keyframes.ts         Keyframe extraction (~1 frame / 1.5s, capped)
   storage/
@@ -227,5 +246,7 @@ src/
     GridBackground.tsx   SVG graph-paper canvas
   theme/theme.ts         Design tokens (colors, spacing, touch targets)
   types/models.ts        Domain types mirroring the SQLite schema
-  utils/id.ts            UUID helper
+  utils/
+    id.ts                UUID helper
+    export.ts            Findings report (text/JSON) + share
 ```

@@ -17,6 +17,9 @@ export type RootStackParamList = {
   Playback: { uri: string; title: string };
   Analysis: { propertyId: string };
   Settings: undefined;
+  Results: { propertyId: string };
+  /** Side-by-side comparison for one room, optionally focused on a finding. */
+  Comparison: { inspectionSessionId: string; roomId: string; findingId?: string };
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =

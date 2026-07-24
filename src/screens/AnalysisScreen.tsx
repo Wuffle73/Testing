@@ -203,6 +203,13 @@ export function AnalysisScreen({ route, navigation }: RootStackScreenProps<'Anal
 
       <View style={styles.footer}>
         <Button
+          label="Results & map"
+          icon="🗺"
+          variant="secondary"
+          onPress={() => navigation.navigate('Results', { propertyId })}
+          disabled={running}
+        />
+        <Button
           label={
             running
               ? 'Analyzing…'
@@ -291,7 +298,7 @@ function FindingCard({
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: spacing.lg, gap: spacing.md, paddingBottom: 96 },
+  container: { padding: spacing.lg, gap: spacing.md, paddingBottom: 160 },
   headerGear: { fontSize: 22, color: colors.primary, paddingHorizontal: spacing.sm },
   modeRow: { flexDirection: 'row' },
   modeChip: { borderRadius: radius.pill, paddingVertical: spacing.xs, paddingHorizontal: spacing.md },
@@ -361,5 +368,6 @@ const styles = StyleSheet.create({
     left: spacing.lg,
     right: spacing.lg,
     bottom: spacing.xl,
+    gap: spacing.sm,
   },
 });

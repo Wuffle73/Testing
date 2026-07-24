@@ -12,6 +12,8 @@ import { RecordScreen } from '../screens/RecordScreen';
 import { PlaybackScreen } from '../screens/PlaybackScreen';
 import { AnalysisScreen } from '../screens/AnalysisScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { ResultsScreen } from '../screens/ResultsScreen';
+import { ComparisonScreen } from '../screens/ComparisonScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -49,6 +51,8 @@ export function RootNavigator() {
         options={{ presentation: 'modal', title: 'Playback' }}
       />
       <Stack.Screen name="Analysis" component={AnalysisScreen} options={{ title: 'AI analysis' }} />
+      <Stack.Screen name="Results" component={ResultsScreen} options={{ title: 'Results' }} />
+      <Stack.Screen name="Comparison" component={ComparisonScreen} options={{ title: 'Compare' }} />
       <Stack.Screen
         name="Settings"
         component={SettingsScreen}

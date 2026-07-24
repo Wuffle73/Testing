@@ -277,6 +277,15 @@ export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps
                 style={styles.walkBtn}
               />
             ) : null}
+            {inspection ? (
+              <Button
+                label="Results map & comparison"
+                icon="🗺"
+                variant="secondary"
+                onPress={() => navigation.navigate('Results', { propertyId })}
+                style={styles.walkBtn}
+              />
+            ) : null}
           </>
         )}
       </View>
