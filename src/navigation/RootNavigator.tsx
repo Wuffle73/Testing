@@ -14,6 +14,7 @@ import { AnalysisScreen } from '../screens/AnalysisScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { ResultsScreen } from '../screens/ResultsScreen';
 import { ComparisonScreen } from '../screens/ComparisonScreen';
+import { StorageScreen } from '../screens/StorageScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -53,6 +54,7 @@ export function RootNavigator() {
       <Stack.Screen name="Analysis" component={AnalysisScreen} options={{ title: 'AI analysis' }} />
       <Stack.Screen name="Results" component={ResultsScreen} options={{ title: 'Results' }} />
       <Stack.Screen name="Comparison" component={ComparisonScreen} options={{ title: 'Compare' }} />
+      <Stack.Screen name="Storage" component={StorageScreen} options={{ title: 'Storage & sessions' }} />
       <Stack.Screen
         name="Settings"
         component={SettingsScreen}

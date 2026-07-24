@@ -11,6 +11,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import type { RootStackScreenProps } from '../navigation/types';
 import { listPropertySummaries, type PropertySummary } from '../db/properties';
+import { availableDiskSpace, formatBytes, isLowOnSpace } from '../storage/videos';
 import { colors, spacing, radius, fontSize, shadow, TOUCH_TARGET } from '../theme/theme';
 import { PhaseChip } from '../components/StatusChip';
 import { EmptyState } from '../components/EmptyState';
@@ -94,6 +95,16 @@ export function DashboardScreen({ navigation }: RootStackScreenProps<'Dashboard'
         data={summaries}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        ListHeaderComponent={
+          isLowOnSpace() ? (
+            <View style={styles.lowSpace}>
+              <Text style={styles.lowSpaceText}>
+                ⚠️ Low storage — {formatBytes(availableDiskSpace())} free. Delete old sessions from a
+                property's Storage screen before recording.
+              </Text>
+            </View>
+          ) : null
+        }
         renderItem={({ item }) => (
           <PropertyCard
             summary={item}
@@ -148,6 +159,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   listContent: { padding: spacing.lg, paddingBottom: 96, gap: spacing.md },
+  lowSpace: { backgroundColor: colors.dangerMuted, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md },
+  lowSpaceText: { color: colors.danger, fontSize: fontSize.sm, fontWeight: '600', lineHeight: 20 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,

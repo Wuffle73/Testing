@@ -36,6 +36,30 @@ export async function getSession(id: string): Promise<Session | null> {
   return row ? rowToSession(row) : null;
 }
 
+/** A session enriched with its clip/finding counts, for the storage screen. */
+export interface SessionSummary extends Session {
+  clipCount: number;
+  findingCount: number;
+}
+
+export async function listSessionSummaries(propertyId: string): Promise<SessionSummary[]> {
+  const db = await getDb();
+  const rows = await db.getAllAsync<SessionRow & { clip_count: number; finding_count: number }>(
+    `SELECT s.*,
+       (SELECT COUNT(*) FROM clips c WHERE c.session_id = s.id) AS clip_count,
+       (SELECT COUNT(*) FROM findings f WHERE f.inspection_session_id = s.id) AS finding_count
+     FROM sessions s
+     WHERE s.property_id = ?
+     ORDER BY s.created_at DESC`,
+    [propertyId]
+  );
+  return rows.map((r) => ({
+    ...rowToSession(r),
+    clipCount: r.clip_count,
+    findingCount: r.finding_count,
+  }));
+}
+
 /** The in-progress session of a type for a property, if one exists. */
 export async function getActiveSession(
   propertyId: string,

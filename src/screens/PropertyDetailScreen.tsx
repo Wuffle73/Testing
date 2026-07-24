@@ -291,6 +291,13 @@ export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps
       </View>
 
       <View style={styles.actions}>
+        <Button
+          label="Storage & sessions"
+          icon="🎞"
+          variant="secondary"
+          onPress={() => navigation.navigate('Storage', { propertyId })}
+          style={styles.storageBtn}
+        />
         <Button label="Delete property" variant="danger" icon="🗑" onPress={onDelete} />
       </View>
     </ScrollView>
@@ -348,7 +355,8 @@ const styles = StyleSheet.create({
   completeTag: { color: colors.success, fontWeight: '800', fontSize: fontSize.xs },
   walkBtn: { marginTop: spacing.sm },
   roadmapTitle: { fontSize: fontSize.md, fontWeight: '700', color: colors.text },
-  actions: { marginTop: spacing.xl },
+  actions: { marginTop: spacing.xl, gap: spacing.md },
+  storageBtn: {},
   headerEdit: { color: colors.primary, fontSize: fontSize.md, fontWeight: '700' },
   muted: { fontSize: fontSize.sm, color: colors.textMuted, lineHeight: 20 },
   note: { fontSize: fontSize.xs, color: colors.textMuted, lineHeight: 18, fontStyle: 'italic' },

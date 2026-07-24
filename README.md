@@ -51,7 +51,7 @@ every step**.
 | 5 | **Inspection recording flow** | ✅ Done |
 | 6 | **Anthropic API paired-frame analysis (+ mock mode)** | ✅ Done |
 | 7 | **Results map + side-by-side comparison view** | ✅ Done |
-| 8 | Polish (permissions, low-storage, empty states, one-handed UX) | ⏳ Planned |
+| 8 | **Polish (permissions, low-storage, empty states, one-handed UX)** | ✅ Done |
 
 ### What works right now (step 1)
 
@@ -144,7 +144,23 @@ every step**.
 - **Export** the per-property findings as **plain text or JSON** via the native
   share sheet (`expo-sharing`). (A polished PDF report is a later phase.)
 
-Everything is stored locally on the device — there is **no backend server**.
+### What works right now (step 8 — polish)
+
+- **Storage & sessions**: each property has a storage screen showing free device
+  space and every recording session, with **per-session delete** (removes its
+  clips, extracted frames, and findings) so you can free space.
+- **Low-storage handling**: free space is checked before each recording; a
+  warning banner also appears on the dashboard and storage screen when space is
+  low.
+- **Permission-denied** camera/microphone flow with a clear explainer and an
+  *Allow access* / *Open settings* path — no silent crash.
+- **Empty states** throughout (no properties, no rooms, no inspection, no
+  findings) and **thumb-friendly** 48pt+ touch targets and native video controls
+  for one-handed use while walking a room. Dark mode is intentionally out of
+  scope per the brief.
+
+**All 8 build-order steps are complete.** Everything is stored locally on the
+device — there is **no backend server**.
 
 ---
 
@@ -233,6 +249,7 @@ src/
     SettingsScreen.tsx       API key, mock mode, model selection
     ResultsScreen.tsx        Severity map pins + findings summary + export
     ComparisonScreen.tsx     Side-by-side seekable video + SVG overlay
+    StorageScreen.tsx        Per-session delete + free-space display
   media/
     keyframes.ts         Keyframe extraction (~1 frame / 1.5s, capped)
   storage/

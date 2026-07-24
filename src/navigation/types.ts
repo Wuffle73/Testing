@@ -20,6 +20,7 @@ export type RootStackParamList = {
   Results: { propertyId: string };
   /** Side-by-side comparison for one room, optionally focused on a finding. */
   Comparison: { inspectionSessionId: string; roomId: string; findingId?: string };
+  Storage: { propertyId: string };
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =
