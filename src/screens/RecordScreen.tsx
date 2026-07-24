@@ -22,6 +22,8 @@ import {
   getOrCreateSession,
 } from '../db/sessions';
 import { getClipsByRoom, upsertClip } from '../db/clips';
+import { countKeyframesForClip } from '../db/keyframes';
+import { extractKeyframesForClip } from '../media/keyframes';
 import {
   availableDiskSpace,
   formatBytes,
@@ -49,6 +51,8 @@ export function RecordScreen({ route, navigation }: RootStackScreenProps<'Record
   const [clips, setClips] = useState<Record<string, Clip>>({});
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>('idle');
+  const [savingLabel, setSavingLabel] = useState('Saving…');
+  const [frameCounts, setFrameCounts] = useState<Record<string, number>>({});
   const [elapsed, setElapsed] = useState(0);
   const [cameraReady, setCameraReady] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -76,9 +80,18 @@ export function RecordScreen({ route, navigation }: RootStackScreenProps<'Record
       const s = await getOrCreateSession(propertyId, sessionType);
       const clipMap = await getClipsByRoom(s.id);
       if (!active) return;
+      // Frame counts for rooms already recorded (shown on the "done" badge).
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        Object.values(clipMap).map(async (c) => {
+          counts[c.roomId] = await countKeyframesForClip(c.id);
+        })
+      );
+      if (!active) return;
       setRooms(roomList);
       setSession(s);
       setClips(clipMap);
+      setFrameCounts(counts);
       // Resume at the first not-yet-recorded room.
       const firstUnrecorded = roomList.findIndex((r) => !clipMap[r.id]);
       setIndex(firstUnrecorded === -1 ? 0 : firstUnrecorded);
@@ -114,6 +127,7 @@ export function RecordScreen({ route, navigation }: RootStackScreenProps<'Record
         return;
       }
       setPhase('saving');
+      setSavingLabel('Saving video…');
       const durationMs = Date.now() - recordStartRef.current;
       const { uri } = await persistRecording(result.uri, session.id, room.id);
       const clip = await upsertClip({
@@ -124,8 +138,18 @@ export function RecordScreen({ route, navigation }: RootStackScreenProps<'Record
         width: null,
         height: null,
       });
-      // NOTE: keyframe extraction for this clip is wired in build step 4.
       setClips((prev) => ({ ...prev, [room.id]: clip }));
+
+      // Extract keyframes for this clip. Failure here doesn't lose the clip —
+      // frames can be re-extracted later, and step 6 tolerates missing frames.
+      setSavingLabel('Extracting frames…');
+      try {
+        const frames = await extractKeyframesForClip(clip);
+        setFrameCounts((prev) => ({ ...prev, [room.id]: frames.length }));
+      } catch (err) {
+        console.warn('Keyframe extraction failed', err);
+        setFrameCounts((prev) => ({ ...prev, [room.id]: 0 }));
+      }
       setPhase('idle');
     } catch (err) {
       setPhase('idle');
@@ -277,13 +301,16 @@ export function RecordScreen({ route, navigation }: RootStackScreenProps<'Record
           </View>
         ) : currentClip ? (
           <View style={styles.doneBadge} pointerEvents="none">
-            <Text style={styles.doneText}>✓ Recorded</Text>
+            <Text style={styles.doneText}>
+              ✓ Recorded{room && frameCounts[room.id] ? ` · ${frameCounts[room.id]} frames` : ''}
+            </Text>
           </View>
         ) : null}
       </View>
 
       {/* Controls */}
       <View style={styles.controls}>
+        {isSaving ? <Text style={styles.savingCaption}>{savingLabel}</Text> : null}
         <View style={styles.dots}>
           {rooms.map((r, i) => (
             <View
@@ -451,6 +478,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
   },
+  savingCaption: { textAlign: 'center', color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '600' },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: spacing.xs, flexWrap: 'wrap' },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.border },
   dotDone: { backgroundColor: colors.success },

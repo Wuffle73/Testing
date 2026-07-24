@@ -47,7 +47,7 @@ every step**.
 | 1 | Project scaffold, navigation shell, SQLite schema, **property CRUD** | ✅ Done |
 | 2 | **Room list management + floor-map pin placement** | ✅ Done |
 | 3 | **Guided per-room baseline recording + playback** | ✅ Done |
-| 4 | Keyframe extraction pipeline | ⏳ Planned |
+| 4 | **Keyframe extraction pipeline** | ✅ Done |
 | 5 | Inspection recording flow | ⏳ Planned |
 | 6 | Anthropic API paired-frame analysis (+ mock mode) | ⏳ Planned |
 | 7 | Results map + side-by-side comparison view | ⏳ Planned |
@@ -132,7 +132,7 @@ sample findings, so the whole app is testable without a key or network calls.
 - **expo-camera** — recording *(step 3)*
 - **expo-video** — playback *(step 3; see note below)*
 - **expo-file-system** — local video/frame storage *(step 3+)*
-- **expo-video-thumbnails** — keyframe extraction *(step 4)*
+- **expo-video-thumbnails** — keyframe extraction *(step 4, live)*
 - **react-native-svg** — floor-map / pin overlay canvas *(steps 2 & 7)*
 - **expo-image-picker** — optional floor-plan photo for the map *(step 2)*
 
@@ -156,6 +156,7 @@ src/
     rooms.ts             Room CRUD, reorder, and pin persistence
     sessions.ts          Walkthrough sessions (baseline/inspection)
     clips.ts             Per-room video clip rows
+    keyframes.ts         Extracted keyframe rows
   navigation/
     RootNavigator.tsx    Native stack
     types.ts             Route param types
@@ -167,8 +168,11 @@ src/
     FloorMapScreen.tsx       Drag room pins on a grid or photo
     RecordScreen.tsx         Guided per-room recording (baseline/inspection)
     PlaybackScreen.tsx       Single-clip player (expo-video)
+  media/
+    keyframes.ts         Keyframe extraction (~1 frame / 1.5s, capped)
   storage/
     videos.ts            Local clip storage + free-space checks
+    frames.ts            Local keyframe image storage
   components/
     Button.tsx           Thumb-friendly button
     StatusChip.tsx       Lifecycle status pill

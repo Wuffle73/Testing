@@ -1,6 +1,7 @@
 import { getDb } from './database';
 import { uuid } from '../utils/id';
 import { deleteVideoFile } from '../storage/videos';
+import { deleteClipFrames } from '../storage/frames';
 import type { Clip } from '../types/models';
 
 /** Per-room video clip persistence. */
@@ -95,6 +96,10 @@ export async function upsertClip(input: ClipInput): Promise<Clip> {
 export async function deleteClip(id: string): Promise<void> {
   const db = await getDb();
   const clip = await db.getFirstAsync<ClipRow>('SELECT * FROM clips WHERE id = ?', [id]);
-  if (clip) deleteVideoFile(clip.video_uri);
+  if (clip) {
+    deleteVideoFile(clip.video_uri);
+    deleteClipFrames(clip.session_id, clip.id);
+  }
+  // Keyframe rows cascade via the foreign key on delete.
   await db.runAsync('DELETE FROM clips WHERE id = ?', [id]);
 }
