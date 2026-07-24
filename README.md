@@ -192,7 +192,7 @@ real comparisons.
 
 ## Tech stack
 
-- **Expo SDK 56** (React Native 0.85, React 19) + TypeScript — pinned to the
+- **Expo SDK 55** (React Native 0.83, React 19) + TypeScript — pinned to the
   SDK the public **Expo Go** app currently supports, so it runs by scanning the
   QR with no native build
 - **expo-sqlite** — structured local data
@@ -207,7 +207,7 @@ real comparisons.
 - **expo-image-picker** — optional floor-plan photo for the map *(step 2)*
 
 > **Note on `expo-av`:** the brief specifies `expo-av` for playback, but
-> `expo-av` was **removed from recent Expo SDKs** (it's gone in SDK 56). Its
+> `expo-av` was **removed from recent Expo SDKs** (it's gone in SDK 55). Its
 > replacements are `expo-video` (video) and `expo-audio` (audio). This app uses
 > **`expo-video`** for playback — the same capability, current API.
 
