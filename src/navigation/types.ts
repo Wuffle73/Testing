@@ -9,6 +9,8 @@ export type RootStackParamList = {
   /** Create a property when no propertyId is passed; edit otherwise. */
   PropertyForm: { propertyId?: string } | undefined;
   PropertyDetail: { propertyId: string };
+  Rooms: { propertyId: string };
+  FloorMap: { propertyId: string };
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =

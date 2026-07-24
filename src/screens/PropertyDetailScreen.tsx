@@ -102,7 +102,8 @@ export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps
       {rooms.length === 0 ? (
         <View style={styles.card}>
           <Text style={styles.muted}>
-            No rooms yet. Room management and the floor-map pins arrive in the next build step.
+            No rooms yet. Add the rooms or areas you want to walk through — they define the
+            recording order for both walkthroughs.
           </Text>
         </View>
       ) : (
@@ -114,10 +115,29 @@ export function PropertyDetailScreen({ route, navigation }: RootStackScreenProps
             >
               <Text style={styles.roomIndex}>{i + 1}</Text>
               <Text style={styles.roomName}>{room.name}</Text>
+              {room.pinX != null && room.pinY != null ? (
+                <Text style={styles.roomPinned}>📍</Text>
+              ) : null}
             </View>
           ))}
         </View>
       )}
+      <View style={styles.rowButtons}>
+        <Button
+          label={rooms.length === 0 ? 'Add rooms' : 'Manage rooms'}
+          icon="🚪"
+          variant="secondary"
+          onPress={() => navigation.navigate('Rooms', { propertyId })}
+          style={styles.rowButton}
+        />
+        <Button
+          label="Floor map"
+          icon="🗺"
+          variant="secondary"
+          onPress={() => navigation.navigate('FloorMap', { propertyId })}
+          style={styles.rowButton}
+        />
+      </View>
 
       {/* Roadmap placeholders — these flows are wired up in later build steps. */}
       <Text style={styles.sectionTitle}>Walkthroughs</Text>
@@ -173,7 +193,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     overflow: 'hidden',
   },
-  roomName: { fontSize: fontSize.md, color: colors.text, fontWeight: '600' },
+  roomName: { flex: 1, fontSize: fontSize.md, color: colors.text, fontWeight: '600' },
+  roomPinned: { fontSize: fontSize.sm },
+  rowButtons: { flexDirection: 'row', gap: spacing.md },
+  rowButton: { flex: 1 },
   roadmapTitle: { fontSize: fontSize.md, fontWeight: '700', color: colors.text },
   actions: { marginTop: spacing.xl },
   headerEdit: { color: colors.primary, fontSize: fontSize.md, fontWeight: '700' },

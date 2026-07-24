@@ -100,6 +100,16 @@ export async function getProperty(id: string): Promise<Property | null> {
   return row ? rowToProperty(row) : null;
 }
 
+/** Sets or clears (pass null) the property's floor-map background image. */
+export async function setFloorMap(propertyId: string, uri: string | null): Promise<void> {
+  const db = await getDb();
+  await db.runAsync('UPDATE properties SET floor_map_uri = ?, updated_at = ? WHERE id = ?', [
+    uri,
+    Date.now(),
+    propertyId,
+  ]);
+}
+
 export async function listProperties(): Promise<Property[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<PropertyRow>(

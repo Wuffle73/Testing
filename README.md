@@ -45,7 +45,7 @@ every step**.
 | Step | Feature | Status |
 |------|---------|--------|
 | 1 | Project scaffold, navigation shell, SQLite schema, **property CRUD** | ✅ Done |
-| 2 | Room list management + floor-map pin placement | ⏳ Planned |
+| 2 | **Room list management + floor-map pin placement** | ✅ Done |
 | 3 | Guided per-room baseline recording + playback | ⏳ Planned |
 | 4 | Keyframe extraction pipeline | ⏳ Planned |
 | 5 | Inspection recording flow | ⏳ Planned |
@@ -64,6 +64,17 @@ every step**.
 - A complete **local SQLite schema** (`properties`, `rooms`, `sessions`,
   `clips`, `keyframes`, `findings`, `analysis_jobs`, `app_settings`) created via
   a versioned migration runner, so later steps add UI without schema churn.
+
+### What works right now (step 2)
+
+- **Room management** per property: add, rename (tap a room), delete, and
+  reorder with up/down controls. Order is the guided-walkthrough recording
+  order, which is how baseline and inspection clips are matched later.
+- **Floor map**: a `react-native-svg` grid canvas (or an optional uploaded
+  floor-plan photo). Tap a room to drop its labeled pin, then **drag** it into
+  place; tap a placed room to remove its pin. Pin positions are stored as
+  normalized coordinates so they survive re-layout and background swaps. The
+  map is a visual index into rooms, not an architectural drawing.
 
 Everything is stored locally on the device — there is **no backend server**.
 
@@ -101,6 +112,7 @@ sample findings, so the whole app is testable without a key or network calls.
 - **expo-file-system** — local video/frame storage *(step 3+)*
 - **expo-video-thumbnails** — keyframe extraction *(step 4)*
 - **react-native-svg** — floor-map / pin overlay canvas *(steps 2 & 7)*
+- **expo-image-picker** — optional floor-plan photo for the map *(step 2)*
 
 > **Note on `expo-av`:** the brief specifies `expo-av` for playback, but
 > `expo-av` was **removed in Expo SDK 57**. Its replacements are `expo-video`
@@ -118,8 +130,8 @@ src/
   db/
     database.ts          Singleton SQLite handle + PRAGMAs
     schema.ts            DDL + versioned migration runner (PRAGMA user_version)
-    properties.ts        Property CRUD + dashboard status derivation
-    rooms.ts             Room reads (writes land in step 2)
+    properties.ts        Property CRUD + dashboard status + floor-map image
+    rooms.ts             Room CRUD, reorder, and pin persistence
   navigation/
     RootNavigator.tsx    Native stack
     types.ts             Route param types
@@ -127,10 +139,14 @@ src/
     DashboardScreen.tsx      Property list + status chips
     PropertyFormScreen.tsx   Create / edit property
     PropertyDetailScreen.tsx Property overview + delete
+    RoomsScreen.tsx          Add / rename / delete / reorder rooms
+    FloorMapScreen.tsx       Drag room pins on a grid or photo
   components/
     Button.tsx           Thumb-friendly button
     StatusChip.tsx       Lifecycle status pill
     EmptyState.tsx       Empty-list placeholder
+    TextPromptModal.tsx  Cross-platform single-line input dialog
+    GridBackground.tsx   SVG graph-paper canvas
   theme/theme.ts         Design tokens (colors, spacing, touch targets)
   types/models.ts        Domain types mirroring the SQLite schema
   utils/id.ts            UUID helper

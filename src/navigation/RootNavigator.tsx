@@ -6,6 +6,8 @@ import { colors } from '../theme/theme';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { PropertyFormScreen } from '../screens/PropertyFormScreen';
 import { PropertyDetailScreen } from '../screens/PropertyDetailScreen';
+import { RoomsScreen } from '../screens/RoomsScreen';
+import { FloorMapScreen } from '../screens/FloorMapScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -34,6 +36,8 @@ export function RootNavigator() {
         component={PropertyDetailScreen}
         options={{ title: 'Property' }}
       />
+      <Stack.Screen name="Rooms" component={RoomsScreen} options={{ title: 'Rooms' }} />
+      <Stack.Screen name="FloorMap" component={FloorMapScreen} options={{ title: 'Floor map' }} />
     </Stack.Navigator>
   );
 }
